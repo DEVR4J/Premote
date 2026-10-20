@@ -20,12 +20,6 @@ jobs:
           test -f extracted/Advocate-app/package.json
           test -f extracted/Advocate-app/android/gradlew
 
-      - name: Replace eCourts source files
-        run: |
-          cp ecourts.ts extracted/Advocate-app/ecourts.ts
-          cp ECourtsSync.tsx extracted/Advocate-app/ECourtsSync.tsx
-          cp App.tsx extracted/Advocate-app/App.tsx
-          echo "eCourts files replaced successfully"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
