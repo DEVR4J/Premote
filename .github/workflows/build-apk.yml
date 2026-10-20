@@ -24,6 +24,7 @@ jobs:
         run: |
           cp ecourts.ts extracted/Advocate-app/ecourts.ts
           cp ECourtsSync.tsx extracted/Advocate-app/ECourtsSync.tsx
+          cp App.tsx extracted/Advocate-app/App.tsx
           echo "eCourts files replaced successfully"
 
       - name: Set up Node.js
