@@ -16,7 +16,7 @@ jobs:
 
       - name: Extract Advocate project
         run: |
-          unzip -q Advocate-app-ecourts-sync.zip -d extracted
+          unzip -q Advocate-app-complete.zip -d extracted
           test -f extracted/Advocate-app/package.json
           test -f extracted/Advocate-app/android/gradlew
 
