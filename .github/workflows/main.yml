@@ -1,0 +1,34 @@
+name: Build Phone APK
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  phone-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unzip project
+        run: unzip -q -o phone-app.zip -d src
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+      - uses: subosito/flutter-action@v2
+        with: { flutter-version: "3.24.5", channel: stable }
+      - name: Build phone APK
+        working-directory: src
+        run: |
+          mkdir /tmp/keep && cp -r lib pubspec.yaml /tmp/keep/
+          flutter create --platforms=android --org com.example --project-name tv_remote .
+          rm -rf lib test && cp -r /tmp/keep/lib . && cp /tmp/keep/pubspec.yaml .
+          sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET"/>\n    <application android:usesCleartextTraffic="true"|' android/app/src/main/AndroidManifest.xml
+          flutter pub get
+          flutter build apk --release --no-shrink
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phone-apk
+          path: src/build/app/outputs/flutter-apk/app-release.apk
