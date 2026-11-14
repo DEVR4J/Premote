@@ -1,4 +1,4 @@
-name: Build Phone APK
+name: Build and release Phone APK
 
 on:
   push:
@@ -6,10 +6,10 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  phone-apk:
+  release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,17 +19,28 @@ jobs:
         with: { distribution: temurin, java-version: "17" }
       - uses: subosito/flutter-action@v2
         with: { flutter-version: "3.24.5", channel: stable }
+      - name: Use the fixed signing key (needed so updates install over older versions)
+        run: |
+          mkdir -p ~/.android
+          cp src/ci/debug.keystore ~/.android/debug.keystore
       - name: Build phone APK
         working-directory: src
         run: |
           mkdir /tmp/keep && cp -r lib pubspec.yaml /tmp/keep/
           flutter create --platforms=android --org com.example --project-name tv_remote .
           rm -rf lib test && cp -r /tmp/keep/lib . && cp /tmp/keep/pubspec.yaml .
-          sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>\n    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>\n    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>\n    <application android:usesCleartextTraffic="true"|' android/app/src/main/AndroidManifest.xml
-          sed -i 's|<activity|<activity android:screenOrientation="sensorLandscape"|' android/app/src/main/AndroidManifest.xml
+          cp -r phone_icons/* android/app/src/main/res/
+          sed -i "s|OWNER/REPO|${{ github.repository }}|; s|const int kBuild = 0;|const int kBuild = ${{ github.run_number }};|" lib/update.dart
+          sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>\n    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>\n    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>\n    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>\n    <application android:usesCleartextTraffic="true"|' android/app/src/main/AndroidManifest.xml
+          sed -i 's|android:label="[^"]*"|android:label="ATC Phone"|' android/app/src/main/AndroidManifest.xml
           flutter pub get
-          flutter build apk --release --no-shrink
-      - uses: actions/upload-artifact@v4
+          flutter build apk --release --no-shrink --build-number=${{ github.run_number }} --build-name=1.0.${{ github.run_number }}
+      - name: Name the APK
+        run: cp src/build/app/outputs/flutter-apk/app-release.apk ATC-Phone.apk
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
         with:
-          name: phone-apk
-          path: src/build/app/outputs/flutter-apk/app-release.apk
+          tag_name: v1.0.${{ github.run_number }}
+          name: ATC Phone v1.0.${{ github.run_number }}
+          files: ATC-Phone.apk
+          make_latest: true
