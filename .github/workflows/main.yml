@@ -30,9 +30,13 @@ jobs:
           flutter create --platforms=android --org com.example --project-name tv_remote .
           rm -rf lib test && cp -r /tmp/keep/lib . && cp /tmp/keep/pubspec.yaml .
           cp -r phone_icons/* android/app/src/main/res/
+          find android/app/src/main -name 'MainActivity.*' -delete
+          mkdir -p android/app/src/main/kotlin/com/example/tv_remote
+          cp android_native/*.kt android/app/src/main/kotlin/com/example/tv_remote/
           sed -i "s|OWNER/REPO|${{ github.repository }}|; s|const int kBuild = 0;|const int kBuild = ${{ github.run_number }};|" lib/update.dart
-          sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>\n    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>\n    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>\n    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>\n    <application android:usesCleartextTraffic="true"|' android/app/src/main/AndroidManifest.xml
+          sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>\n    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>\n    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>\n    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE"/>\n    <uses-permission android:name="android.permission.WAKE_LOCK"/>\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>\n    <application android:usesCleartextTraffic="true"|' android/app/src/main/AndroidManifest.xml
           sed -i 's|android:label="[^"]*"|android:label="ATC Phone"|' android/app/src/main/AndroidManifest.xml
+          sed -i 's|</application>|<service android:name=".KeepAliveService" android:exported="false" android:foregroundServiceType="connectedDevice"/>\n    </application>|' android/app/src/main/AndroidManifest.xml
           flutter pub get
           flutter build apk --release --no-shrink --build-number=${{ github.run_number }} --build-name=1.0.${{ github.run_number }}
       - name: Name the APK
