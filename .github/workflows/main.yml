@@ -55,6 +55,9 @@ jobs:
               }
           }
           EOF
+          echo "::group::Dart errors (if any)"
+          flutter analyze --no-pub lib 2>&1 | grep -E "error •" || echo "no analyzer errors found"
+          echo "::endgroup::"
           flutter build apk --release --no-shrink --build-number=${{ github.run_number }} --build-name=1.0.${{ github.run_number }}
       - name: Name the APK
         run: cp src/build/app/outputs/flutter-apk/app-release.apk ATC-Phone.apk
